@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+*.sqlite3
+*.db
+dist/
+build/
+release/
+tmp/
+logs/
+tools/
+tmp-innosetup.exe
+tmp-innosetup.log

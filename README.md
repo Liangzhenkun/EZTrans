@@ -1,0 +1,65 @@
+# EZTrans
+
+EZTrans 是一个离线优先、桌面小窗、可置顶、可托盘驻留的本地翻译器。它的目标不是堆功能，而是把“打开网页翻译”这件事压缩成一个几乎无感的本地动作。
+
+当前仓库已经包含完整桌面应用代码，核心能力包括：
+
+- 本地离线翻译：基于 `Argos Translate`
+- 本地词典层：中英使用 `CC-CEDICT`，北欧语词典按需导入 `FreeDict`
+- 联网增强：支持 `MyMemory`、`LibreTranslate`、`OpenAI-compatible`
+- 例句分层展示：在线优先，离线回退本地例句库
+- 历史记录：自动记录翻译内容，并支持导出 `CSV` / `JSON`
+- 发音：支持 Windows 系统 TTS，并预留本地 `Piper` 神经语音后端
+- 更新：检查应用更新与离线模型更新
+- GUI：Tk 小窗、置顶、托盘、全局热键
+
+详细设计见：
+
+- [架构设计](./docs/architecture.md)
+
+## 运行方式
+
+### 1. 创建虚拟环境并安装依赖
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python -m pip install --upgrade pip
+.\.venv\Scripts\python -m pip install -e .
+```
+
+### 2. 启动应用
+
+```powershell
+.\scripts\run.ps1
+```
+
+或者：
+
+```powershell
+$env:PYTHONPATH='src'
+.\.venv\Scripts\python -m eztrans
+```
+
+## 首次启动说明
+
+- 首次启动会导入内置例句
+- 联网状态下会自动安装中英离线翻译模型
+- 首次使用芬兰语、瑞典语、丹麦语、挪威语时，会按需下载对应离线资源
+- 中英词典会在首次联网初始化时自动导入
+
+## 当前实现说明
+
+- 挪威语在界面和离线资源层统一按 `nb` 处理
+- 中译北欧语、北欧语译中会优先走英文中转
+- 应用更新依赖你在设置页里填写 `GitHub repo` 和发布资产名
+- 如果在线或离线例句都没有命中，程序会回退显示当前翻译结果，避免 `Examples` 区域完全空白
+- 历史记录会按“检测语种 + 目标语种 + 输入内容”去重，重复翻译同一句不会堆出多条
+- `Speak` 默认会稍微放慢一点；导入 `Piper` 语音后会优先使用本地神经语音
+- `OpenAI-compatible` 在线接口支持自动探测 `/models` 并选择更合适的聊天模型
+- 如果系统全局热键注册失败，应用仍可正常使用
+
+## 测试
+
+```powershell
+.\scripts\test.ps1
+```

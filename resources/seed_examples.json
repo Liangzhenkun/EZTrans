@@ -1,0 +1,79 @@
+[
+  {
+    "src_lang": "zh",
+    "tgt_lang": "en",
+    "source_text": "请稍等一下。",
+    "target_text": "Please wait a moment.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "zh",
+    "tgt_lang": "en",
+    "source_text": "我正在处理这个问题。",
+    "target_text": "I am working on this issue.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "en",
+    "tgt_lang": "zh",
+    "source_text": "This translation should stay lightweight and fast.",
+    "target_text": "这个翻译程序应该保持轻量和快速。",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "en",
+    "tgt_lang": "fi",
+    "source_text": "Please send me the latest version.",
+    "target_text": "Lähetä minulle uusin versio.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "fi",
+    "tgt_lang": "en",
+    "source_text": "Tarvitsen nopean käännöksen.",
+    "target_text": "I need a fast translation.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "en",
+    "tgt_lang": "sv",
+    "source_text": "The window stays on top while you work.",
+    "target_text": "Fönstret ligger överst medan du arbetar.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "sv",
+    "tgt_lang": "en",
+    "source_text": "Jag vill ha en enkel översättare.",
+    "target_text": "I want a simple translator.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "en",
+    "tgt_lang": "da",
+    "source_text": "Copy the result and keep moving.",
+    "target_text": "Kopiér resultatet og fortsæt.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "da",
+    "tgt_lang": "en",
+    "source_text": "Det skal være hurtigt at bruge.",
+    "target_text": "It should be quick to use.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "en",
+    "tgt_lang": "nb",
+    "source_text": "The app can update its offline resources.",
+    "target_text": "Appen kan oppdatere sine frakoblede ressurser.",
+    "source_name": "seed"
+  },
+  {
+    "src_lang": "nb",
+    "tgt_lang": "en",
+    "source_text": "Jeg trenger to eksempler.",
+    "target_text": "I need two examples.",
+    "source_name": "seed"
+  }
+]
