@@ -4,6 +4,7 @@ import io
 import threading
 import wave
 import winsound
+from collections.abc import Callable
 from pathlib import Path
 
 import pyttsx3
@@ -33,7 +34,12 @@ class SpeechService:
             self._settings = settings
             self._piper_voice = None
 
-    def speak(self, text: str, lang_code: str) -> None:
+    def speak(
+        self,
+        text: str,
+        lang_code: str,
+        on_done: Callable[[str], None] | None = None,
+    ) -> None:
         if not text.strip():
             return
         with self._lock:
@@ -51,18 +57,30 @@ class SpeechService:
             pass
         threading.Thread(
             target=self._speak_request,
-            args=(request_id, text, lang_code),
+            args=(request_id, text, lang_code, on_done),
             daemon=True,
         ).start()
 
-    def _speak_request(self, request_id: int, text: str, lang_code: str) -> None:
+    def _speak_request(
+        self,
+        request_id: int,
+        text: str,
+        lang_code: str,
+        on_done: Callable[[str], None] | None,
+    ) -> None:
         try:
             if self._use_piper():
                 self._speak_with_piper(request_id, text)
             else:
                 self._speak_with_system(request_id, text, lang_code)
         except Exception:
+            if on_done is not None:
+                on_done("error")
             return
+        if on_done is not None:
+            with self._lock:
+                state = "done" if request_id == self._active_request_id else "canceled"
+            on_done(state)
 
     def _speak_with_system(self, request_id: int, text: str, lang_code: str) -> None:
         engine = pyttsx3.init()

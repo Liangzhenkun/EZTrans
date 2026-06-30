@@ -71,6 +71,11 @@ class EZTransApp:
         self._settings_window: tk.Toplevel | None = None
         self._last_input_snapshot = ""
         self._translate_request_id = 0
+        self._activity_job: str | None = None
+        self._activity_kind: str | None = None
+        self._activity_text = ""
+        self._activity_spinner_index = 0
+        self._spinner_frames = ["◐", "◓", "◑", "◒"]
         self._build_root()
         self._build_widgets()
         self._configure_tray()
@@ -106,6 +111,8 @@ class EZTransApp:
         self.compact_view_var = tk.BooleanVar(value=self.settings.compact_view)
         self.pin_label_var = tk.StringVar(value="")
         self.compact_mode_hint_var = tk.StringVar(value="")
+        self.activity_var = tk.StringVar(value="")
+        self.detected_var = tk.StringVar(value="")
 
         title_bar = ttk.Frame(self.main_frame)
         title_bar.pack(fill="x", pady=(0, 8))
@@ -211,6 +218,17 @@ class EZTransApp:
         self.translation_box.pack(fill="x", pady=(4, 8))
         self.translation_box.insert("1.0", "Ready.")
 
+        self.footer_frame = ttk.Frame(self.main_frame)
+        self.footer_frame.pack(fill="x", pady=(0, 8))
+        ttk.Label(self.footer_frame, textvariable=self.activity_var, style="Muted.TLabel", anchor="w").pack(fill="x")
+        ttk.Label(
+            self.footer_frame,
+            textvariable=self.status_var,
+            style="Muted.TLabel",
+            anchor="w",
+            justify="left",
+        ).pack(fill="x")
+
         self.detail_frame = ttk.Frame(self.main_frame)
         self.detail_frame.pack(fill="both", expand=True)
         self.lexical_section = ttk.Frame(self.detail_frame)
@@ -226,10 +244,6 @@ class EZTransApp:
         self.examples_box = ScrolledText(self.examples_section, height=5, font=("Segoe UI", 10), wrap="word", bd=1, relief="solid")
         self.examples_box.pack(fill="both", expand=True, pady=(4, 10))
         self.examples_box.configure(state="disabled")
-
-        self.footer_frame = ttk.Frame(self.main_frame)
-        self.footer_frame.pack(fill="x")
-        ttk.Label(self.footer_frame, textvariable=self.status_var, anchor="e").pack(side="right", fill="x", expand=True)
 
         self._update_pin_button()
         self._update_compact_mode_hint()
@@ -289,10 +303,11 @@ class EZTransApp:
                 if current:
                     self._translation_job = self.root.after(120, self.translate_now)
                 else:
+                    self._clear_activity()
                     self._set_translation_text("Ready.")
                     self._set_lexical_entries([])
                     self._set_examples([])
-                    self.status_var.set("Idle.")
+                    self._update_result_status(message="Idle.")
             try:
                 self.root.after(120, tick)
             except RuntimeError:
@@ -405,7 +420,8 @@ class EZTransApp:
 
     def _update_compact_mode_hint(self) -> None:
         mode_label = self._mode_label(self.settings.translation_mode)
-        self.compact_mode_hint_var.set(f"Current mode: {mode_label}")
+        target_label = LANGUAGE_LABELS.get(self._selected_target_code(), self._selected_target_code())
+        self.compact_mode_hint_var.set(f"Current mode: {mode_label} | source: auto-detect | target: {target_label}")
 
     def _refresh_detail_visibility(self, has_lexical_entries: bool | None = None, has_examples: bool | None = None) -> None:
         if self.compact_view_var.get():
@@ -443,7 +459,6 @@ class EZTransApp:
             self.full_controls_frame.pack_forget()
             self.full_actions_frame.pack_forget()
             self.detail_frame.pack_forget()
-            self.footer_frame.pack_forget()
             if not self.compact_actions_frame.winfo_manager():
                 self.compact_actions_frame.pack(fill="x", pady=(0, 10), before=self.translation_box)
             self.input_text.configure(height=3)
@@ -452,6 +467,8 @@ class EZTransApp:
             self.examples_section.pack_forget()
             if not self.compact_mode_hint_label.winfo_manager():
                 self.compact_mode_hint_label.pack(fill="x", pady=(0, 8), after=self.main_frame.winfo_children()[0])
+            if not self.footer_frame.winfo_manager():
+                self.footer_frame.pack(fill="x", pady=(0, 8), after=self.translation_box)
             self._resize_window(compact_width, compact_height, initial=initial)
         else:
             self.compact_actions_frame.pack_forget()
@@ -462,7 +479,7 @@ class EZTransApp:
             if not self.detail_frame.winfo_manager():
                 self.detail_frame.pack(fill="both", expand=True)
             if not self.footer_frame.winfo_manager():
-                self.footer_frame.pack(fill="x")
+                self.footer_frame.pack(fill="x", pady=(0, 8), after=self.translation_box)
             self.input_text.configure(height=4)
             self.translation_box.configure(height=4)
             self.compact_mode_hint_label.pack_forget()
@@ -539,6 +556,68 @@ class EZTransApp:
         self.settings.geometry = self.root.geometry()
         self.settings_store.save(self.settings)
 
+    def _set_activity(self, kind: str, text: str, use_spinner: bool = False) -> None:
+        self._activity_kind = kind
+        self._activity_text = text
+        self._activity_spinner_index = 0
+        if self._activity_job is not None:
+            try:
+                self.root.after_cancel(self._activity_job)
+            except Exception:
+                pass
+            self._activity_job = None
+        if not text:
+            self.activity_var.set("")
+            return
+        if use_spinner:
+            self._tick_activity_spinner()
+            return
+        self.activity_var.set(text)
+
+    def _clear_activity(self, kind: str | None = None) -> None:
+        if kind is not None and self._activity_kind != kind:
+            return
+        if self._activity_job is not None:
+            try:
+                self.root.after_cancel(self._activity_job)
+            except Exception:
+                pass
+            self._activity_job = None
+        self._activity_kind = None
+        self._activity_text = ""
+        self.activity_var.set("")
+
+    def _tick_activity_spinner(self) -> None:
+        if not self._activity_text:
+            self.activity_var.set("")
+            self._activity_job = None
+            return
+        frame = self._spinner_frames[self._activity_spinner_index % len(self._spinner_frames)]
+        self._activity_spinner_index += 1
+        self.activity_var.set(f"{frame} {self._activity_text}")
+        self._activity_job = self.root.after(140, self._tick_activity_spinner)
+
+    def _update_result_status(self, result: TranslationResult | None = None, message: str = "") -> None:
+        if message:
+            self.detected_var.set(message)
+            self.status_var.set(message)
+            return
+        if result is None:
+            self.detected_var.set("")
+            self.status_var.set("")
+            return
+        target_label = LANGUAGE_LABELS.get(result.tgt_lang, result.tgt_lang)
+        if result.src_lang == "auto" or self.compact_view_var.get():
+            source_summary = f"Auto-detected: {LANGUAGE_LABELS.get(result.detected_lang, result.detected_lang)} -> {target_label}"
+        else:
+            source_summary = f"Source: {LANGUAGE_LABELS.get(result.detected_lang, result.detected_lang)} -> {target_label}"
+        provider_summary = f"{result.provider_kind}:{result.provider_id}"
+        summary = f"{source_summary} | {provider_summary}"
+        if result.notes:
+            summary += " | " + " | ".join(result.notes)
+        self.detected_var.set(summary)
+        self.status_var.set(summary)
+
     def translate_now(self) -> None:
         text = self.input_text.get("1.0", "end").strip()
         self._last_input_snapshot = text
@@ -546,10 +625,11 @@ class EZTransApp:
             self._set_translation_text("Ready.")
             self._set_lexical_entries([])
             self._set_examples([])
-            self.status_var.set("Idle.")
+            self._clear_activity()
+            self._update_result_status(message="Idle.")
             return
-        self.status_var.set("Translating...")
-        src_lang = self._selected_source_code()
+        self._set_activity("translating", "Translating...", use_spinner=True)
+        src_lang = "auto" if self.compact_view_var.get() else self._selected_source_code()
         tgt_lang = self._selected_target_code()
         translation_mode = self._selected_mode()
         self._translate_request_id += 1
@@ -578,17 +658,16 @@ class EZTransApp:
     def _render_error_if_latest(self, request_id: int, exc: Exception) -> None:
         if request_id != self._translate_request_id:
             return
+        self._clear_activity("translating")
         self._set_translation_text(f"[Error] {exc}")
-        self.status_var.set(f"Translation failed: {exc}")
+        self._update_result_status(message=f"Translation failed: {exc}")
 
     def _render_result(self, result: TranslationResult) -> None:
+        self._clear_activity("translating")
         self._set_translation_text(result.translated_text or "(no result)")
         self._set_lexical_entries(result.lexical_entries)
         self._set_examples(result.examples)
-        status = f"{result.provider_kind}:{result.provider_id} | detected {result.detected_lang}"
-        if result.notes:
-            status += " | " + " | ".join(result.notes)
-        self.status_var.set(status)
+        self._update_result_status(result=result)
 
     def _set_translation_text(self, text: str) -> None:
         self.translation_box.delete("1.0", "end")
@@ -639,10 +718,11 @@ class EZTransApp:
 
     def clear_text(self) -> None:
         self.input_text.delete("1.0", "end")
+        self._clear_activity()
         self._set_translation_text("Ready.")
         self._set_lexical_entries([])
         self._set_examples([])
-        self.status_var.set("Cleared.")
+        self._update_result_status(message="Cleared.")
 
     def copy_output(self) -> None:
         text = self.translation_box.get("1.0", "end").strip()
@@ -657,8 +737,22 @@ class EZTransApp:
         if not text or text == "Ready.":
             return
         lang = self._selected_target_code()
-        self.speech_service.speak(text, lang)
-        self.status_var.set("Speaking...")
+        self._set_activity("speaking", "Speaking...")
+
+        def handle_done(state: str) -> None:
+            def update() -> None:
+                self._clear_activity("speaking")
+                if state == "error":
+                    self.status_var.set("Speech failed.")
+                elif state == "canceled":
+                    self.status_var.set("Speech canceled.")
+
+            try:
+                self.root.after(0, update)
+            except RuntimeError:
+                return
+
+        self.speech_service.speak(text, lang, on_done=handle_done)
 
     def toggle_topmost(self) -> None:
         enabled = self.topmost_var.get()
