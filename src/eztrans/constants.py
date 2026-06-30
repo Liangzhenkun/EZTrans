@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 APP_NAME = "EZTrans"
-APP_VERSION = "0.1.0"
+APP_VERSION = "0.1.1"
 APP_AUTHOR = "OpenAI Codex"
-APP_RELEASE_DATE = "2026-06-30"
+APP_RELEASE_DATE = "2026-07-01"
 
 LANGUAGE_LABELS = {
     "auto": "Auto Detect",

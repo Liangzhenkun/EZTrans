@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
 
-$version = "0.1.0"
+$version = "0.1.1"
 $portablePath = ".\release\EZTrans-$version-portable.zip"
 $setupPath = ".\release\EZTrans-$version-setup.exe"
 $localIsccPath = ".\tools\InnoSetup\ISCC.exe"

@@ -1,5 +1,5 @@
 #define AppName "EZTrans"
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.1"
 #define AppPublisher "Liang Zhenkun"
 #define AppURL "https://github.com/Liangzhenkun/EZTrans"
 #define AppExeName "EZTrans.exe"
@@ -15,7 +15,7 @@ DefaultGroupName={#AppName}
 DisableDirPage=no
 DisableProgramGroupPage=yes
 OutputDir=..\release
-OutputBaseFilename=EZTrans-0.1.0-setup
+OutputBaseFilename=EZTrans-0.1.1-setup
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
