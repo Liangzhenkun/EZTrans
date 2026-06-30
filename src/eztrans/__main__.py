@@ -2,7 +2,12 @@ from __future__ import annotations
 
 import tkinter as tk
 
-from .gui import build_app
+try:
+    from .gui import build_app
+except ImportError:
+    # PyInstaller may execute this file as a top-level script, so keep
+    # an absolute-import fallback for frozen builds.
+    from eztrans.gui import build_app
 
 
 def main() -> None:
