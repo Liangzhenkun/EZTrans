@@ -183,7 +183,21 @@ class EZTransApp:
         ttk.Button(self.full_actions_frame, text="Copy", command=self.copy_output).pack(side="left", padx=4)
         ttk.Button(self.full_actions_frame, text="🔊", width=3, command=self.speak_output).pack(side="left")
         ttk.Button(self.full_actions_frame, text="History", command=self.open_history_window).pack(side="left", padx=(4, 0))
-        ttk.Checkbutton(self.full_actions_frame, text="Pin", variable=self.topmost_var, command=self.toggle_topmost).pack(side="right")
+        self.pin_checkbox = tk.Checkbutton(
+            self.full_actions_frame,
+            textvariable=self.pin_label_var,
+            variable=self.topmost_var,
+            command=self.toggle_topmost,
+            bg="#f4f1ea",
+            activebackground="#f4f1ea",
+            fg="#1b1b1b",
+            selectcolor="#ffffff",
+            relief="flat",
+            bd=0,
+            highlightthickness=0,
+            font=("Segoe UI", 9),
+        )
+        self.pin_checkbox.pack(side="right")
 
         ttk.Label(self.main_frame, text="Main Translation", style="Header.TLabel").pack(anchor="w")
         self.translation_box = ScrolledText(
@@ -385,6 +399,8 @@ class EZTransApp:
         dialog.focus_force()
 
     def _update_pin_button(self) -> None:
+        self.pin_label_var.set("Pin")
+        return
         self.pin_label_var.set("✓ Pin" if self.topmost_var.get() else "Pin")
 
     def _update_compact_mode_hint(self) -> None:
