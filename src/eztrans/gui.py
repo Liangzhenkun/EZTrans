@@ -786,6 +786,7 @@ class EZTransApp:
 
         def save_settings() -> None:
             previous_mode = self.settings.translation_mode
+            previous_api_url = self.settings.openai_base_url.strip()
             for key, label in TRANSLATION_MODE_LABELS.items():
                 if label == mode_var.get():
                     selected_mode = key
@@ -798,6 +799,8 @@ class EZTransApp:
             self.settings.speech_backend = speech_backend_var.get().strip()
             self.settings.openai_api_key = api_key.get().strip()
             self.settings.openai_base_url = api_url.get().strip()
+            if self.settings.openai_base_url != previous_api_url:
+                self.settings.openai_model = ""
             self.settings_store.save(self.settings)
             self._sync_main_mode_display(self.settings.translation_mode)
             self.speech_service.configure(self.settings)

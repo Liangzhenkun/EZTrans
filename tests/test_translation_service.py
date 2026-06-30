@@ -66,6 +66,32 @@ def test_rank_models_prefers_glm_flash_for_bigmodel(tmp_path):
     assert ranked[0] == "glm-4-flash"
 
 
+def test_candidate_ai_runtimes_falls_back_to_discovered_models_when_explicit_model_is_stale(tmp_path, monkeypatch):
+    service = _make_service(tmp_path)
+    service.settings.openai_base_url = "https://api.deepseek.com"
+    service.settings.openai_api_key = "test-key"
+    service.settings.openai_model = "gpt-4.1-mini"
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "data": [
+                    {"id": "deepseek-chat"},
+                    {"id": "deepseek-reasoner"},
+                ]
+            }
+
+    monkeypatch.setattr("eztrans.services.translation_service.requests.get", lambda *args, **kwargs: FakeResponse())
+
+    runtimes = service._candidate_ai_runtimes(service._build_openai_headers() or {})
+
+    assert ("https://api.deepseek.com", "gpt-4.1-mini") in runtimes
+    assert ("https://api.deepseek.com", "deepseek-chat") in runtimes
+
+
 def test_local_mode_does_not_generate_examples(tmp_path, monkeypatch):
     service = _make_service(tmp_path)
     monkeypatch.setattr(service.resource_manager, "translate_offline", lambda text, src, tgt: "hello there")

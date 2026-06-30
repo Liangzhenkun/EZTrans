@@ -298,7 +298,6 @@ class TranslationService:
                 runtime = (base_url, explicit_model)
                 if runtime not in runtimes:
                     runtimes.append(runtime)
-                continue
             try:
                 response = requests.get(base_url + "/models", headers=headers, timeout=20)
                 response.raise_for_status()
